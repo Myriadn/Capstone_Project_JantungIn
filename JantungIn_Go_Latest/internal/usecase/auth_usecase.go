@@ -10,8 +10,9 @@ import (
 	"jantungin-api-server/internal/data/repository"
 	"jantungin-api-server/internal/dto"
 	"jantungin-api-server/internal/services"
-	"jantungin-api-server/pkg/otp"
 	"jantungin-api-server/pkg/utils"
+
+	otp "github.com/Myriadn/otp-lcm"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"

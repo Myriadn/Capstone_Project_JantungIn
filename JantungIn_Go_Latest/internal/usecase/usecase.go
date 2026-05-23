@@ -3,8 +3,9 @@ package usecase
 import (
 	"jantungin-api-server/internal/data/repository"
 	"jantungin-api-server/internal/services"
-	"jantungin-api-server/pkg/otp"
 	"jantungin-api-server/pkg/utils"
+
+	otp "github.com/Myriadn/otp-lcm"
 
 	"gorm.io/gorm"
 )
