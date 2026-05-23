@@ -19,7 +19,13 @@ const handleLogin = async () => {
   loading.value = true
   errorMessage.value = ''
   try {
-    await authService.loginWithEmail(email.value, password.value)
+    const loginResult = await authService.loginWithEmail(email.value, password.value)
+
+    if (loginResult?.otpRequired) {
+      errorMessage.value = 'OTP dikirim ke email Anda. Silakan verifikasi terlebih dahulu.'
+      return
+    }
+
     router.push('/home-admin')
   } catch (err) {
     errorMessage.value = err.message || 'Login failed. Please try again.'

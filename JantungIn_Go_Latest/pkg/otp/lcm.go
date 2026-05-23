@@ -35,6 +35,10 @@ func GenerateOTP(username string, t time.Time) string {
 	hashString := hex.EncodeToString(hash[:])           // Ubah byte array menjadi string heksadesimal (total 64 karakter)
 	truncatedHash := hashString[:8]                     // Mengambil 8 karakter pertama dari hash
 
+	// if strings.EqualFold(strings.TrimSpace(os.Getenv("APP_ENV")), "development") {
+	// 	log.Printf("[OTP-DEBUG] seed=%s truncatedHash=%s", seedStr, truncatedHash)
+	// }
+
 	x0, _ := strconv.ParseInt(truncatedHash, 16, 64) // Konversi 8 karakter heksadesimal sebagai nilai seed
 	x1 := (lcmA*x0 + lcmC) % lcmM                    // Rumus LCM: X_{n+1} = (a * X_n + c) mod m
 	otpVal := x1 % 1000000                           // Konversi ke 6-digit OTP
