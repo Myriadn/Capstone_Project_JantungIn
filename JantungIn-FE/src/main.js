@@ -6,6 +6,7 @@ import router from './router'
 import i18n from './i18n'
 import { registerSW } from './registerSW'
 import { setupServiceProvider } from './services/serviceProvider'
+import { setupAuthGuards } from './router/guards'
 import VueLazyload from 'vue-lazyload'
 import { lazyImageDirective } from './utils/lazyLoadUtils'
 
@@ -17,6 +18,9 @@ const app = createApp(App)
 
 // Setup MVVM architecture with services
 setupServiceProvider(app)
+
+// Setup authentication guards for route protection
+setupAuthGuards(router)
 
 // Use router
 app.use(router)
