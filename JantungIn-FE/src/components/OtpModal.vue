@@ -386,8 +386,8 @@ onUnmounted(() => {
 .otp-wait-spinner {
   width: 50px;
   height: 50px;
-  border: 3px solid rgba(37, 99, 235, 0.2);
-  border-top-color: #2563eb;
+  border: 3px solid rgba(52, 199, 89, 0.2);
+  border-top-color: #34c759;
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin: 0 auto;
