@@ -5,6 +5,7 @@ import FooterComponent from '@/components/Footer-component.vue'
 import LazyImage from '@/components/LazyImage.vue'
 import LoadingComponent from '@/components/LoadingComponent.vue'
 import NetworkErrorComponent from '@/components/NetworkErrorComponent.vue'
+import authService from '@/services/AuthService'
 import profileService from '@/services/ProfileService'
 import statisticsService from '@/services/StatisticsService'
 import {
@@ -124,44 +125,62 @@ const chartOptions = {
 }
 
 // Function to load profile data
+// Function to load profile data
 const loadProfileData = async () => {
   try {
     isLoading.value = true
     error.value = null
 
-    // Load profile data
-    const profileResponse = await profileService.getProfile()
-
-    // Format respons bisa berbeda-beda, jadi kita coba beberapa variasi path
-    // 1. data.data.data - standar dari API yang dikemas dalam axios full response
-    // 2. data.data - untuk data yang dikemas dalam "data" field
-    // 3. data - untuk respons yang langsung berisi data
-    const profileResponseData = profileResponse?.data?.data || profileResponse?.data || {}
-    const profileData = profileResponseData?.data || profileResponseData
-
-    console.log('Profile response structure:', {
-      hasDataData: !!profileResponse?.data?.data,
-      hasData: !!profileResponse?.data,
-      profileData,
-    })
-
-    if (profileData) {
-      console.log('Profile data loaded:', profileData)
+    // First try to get user data from login (stored in localStorage)
+    const currentUser = authService.getCurrentUser()
+    
+    if (currentUser && currentUser.name) {
+      // Use data dari login untuk consistency
       user.value = {
         ...user.value,
-        name: profileData.name || '',
-        email: profileData.email || '',
-        specialty: profileData.specialty || 'Cardiology',
-        department: profileData.department || 'Cardiology',
-        position: profileData.position || 'Senior Cardiologist',
-        license: profileData.license || '1234567890',
-        Hospital: profileData.hospital || 'JantungIn Hospital',
-        dateofbirth: profileData.dateOfBirth,
-        yearsofexperience: profileData.yearsOfExperience || 5,
-        certifications: profileData.certifications || ['Board Certified Cardiologist'],
+        name: currentUser.name || '',
+        email: currentUser.email || '',
+        specialty: currentUser.specialty || 'Cardiology',
+        department: currentUser.department || 'Cardiology',
+        position: currentUser.position || 'Senior Cardiologist',
+        license: currentUser.license || '1234567890',
+        Hospital: currentUser.hospital || 'JantungIn Hospital',
+        dateofbirth: currentUser.dateOfBirth || currentUser.dateofbirth,
+        yearsofexperience: currentUser.yearsOfExperience || currentUser.yearsofexperience || 5,
+        certifications: currentUser.certifications || ['Board Certified Cardiologist'],
       }
+      console.log('Profile data from login:', user.value)
     } else {
-      console.warn('No profile data found in response')
+      // Fallback ke API jika tidak ada login data
+      const profileResponse = await profileService.getProfile()
+
+      const profileResponseData = profileResponse?.data?.data || profileResponse?.data || {}
+      const profileData = profileResponseData?.data || profileResponseData
+
+      console.log('Profile response structure:', {
+        hasDataData: !!profileResponse?.data?.data,
+        hasData: !!profileResponse?.data,
+        profileData,
+      })
+
+      if (profileData) {
+        console.log('Profile data loaded from API:', profileData)
+        user.value = {
+          ...user.value,
+          name: profileData.name || '',
+          email: profileData.email || '',
+          specialty: profileData.specialty || 'Cardiology',
+          department: profileData.department || 'Cardiology',
+          position: profileData.position || 'Senior Cardiologist',
+          license: profileData.license || '1234567890',
+          Hospital: profileData.hospital || 'JantungIn Hospital',
+          dateofbirth: profileData.dateOfBirth,
+          yearsofexperience: profileData.yearsOfExperience || 5,
+          certifications: profileData.certifications || ['Board Certified Cardiologist'],
+        }
+      } else {
+        console.warn('No profile data found in response')
+      }
     }
 
     // Load admin stats dari endpoint /api/v1/admin/stats
@@ -285,8 +304,14 @@ const handleFileUpload = (event) => {
 // Logout function
 const logout = async () => {
   try {
-    // Clear auth data
-    router.push('/admin')
+    // Call auth service to clear token and user data
+    authService.logout()
+
+    // Clear app-specific data
+    localStorage.removeItem('doctorPhotoUrl')
+
+    // Redirect to admin login
+    await router.push('/admin')
   } catch (err) {
     console.error('Logout error:', err)
     showNotification.value = true

@@ -1,7 +1,8 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import authService from '@/services/AuthService'
+import OtpModal from '@/components/OtpModal.vue'
 
 const router = useRouter()
 const email = ref('')
@@ -9,6 +10,61 @@ const password = ref('')
 const loading = ref(false)
 const showPassword = ref(false)
 const errorMessage = ref('')
+
+// OTP Modal state
+const isOtpModalOpen = ref(false)
+const otpDigits = ref(Array.from({ length: 6 }, () => ''))
+const otpStatus = ref('idle')
+const otpErrorMessage = ref('')
+const isOtpResending = ref(false)
+const otpContext = ref({
+  userId: '',
+  email: '',
+  name: '',
+  role: '',
+  otpExpiresIn: 0,
+})
+
+const maskEmail = (emailAddress) => {
+  if (!emailAddress) return ''
+  const [name, domain] = emailAddress.split('@')
+  if (!domain) return emailAddress
+  const visibleCount = Math.min(3, name.length)
+  const visible = name.slice(0, visibleCount)
+  return `${visible}***@${domain}`
+}
+
+const maskedOtpEmail = computed(() => maskEmail(otpContext.value.email))
+
+const resetOtpState = () => {
+  otpDigits.value = Array.from({ length: 6 }, () => '')
+  otpStatus.value = 'idle'
+  otpErrorMessage.value = ''
+}
+
+const openOtpModal = (otpData) => {
+  otpContext.value = {
+    userId: otpData.id || '',
+    email: otpData.email || '',
+    name: otpData.name || '',
+    role: otpData.role || 'dokter',
+    otpExpiresIn: otpData.otpExpiresIn || 0,
+  }
+  resetOtpState()
+  isOtpModalOpen.value = true
+}
+
+const closeOtpModal = () => {
+  isOtpModalOpen.value = false
+  resetOtpState()
+  otpContext.value = {
+    userId: '',
+    email: '',
+    name: '',
+    role: '',
+    otpExpiresIn: 0,
+  }
+}
 
 // Function to navigate to user login page
 const navigateToUserLogin = () => {
@@ -22,7 +78,7 @@ const handleLogin = async () => {
     const loginResult = await authService.loginWithEmail(email.value, password.value)
 
     if (loginResult?.otpRequired) {
-      errorMessage.value = 'OTP dikirim ke email Anda. Silakan verifikasi terlebih dahulu.'
+      openOtpModal(loginResult)
       return
     }
 
@@ -36,6 +92,67 @@ const handleLogin = async () => {
 
 const togglePasswordVisibility = () => {
   showPassword.value = !showPassword.value
+}
+
+const getOtpErrorMessage = (error) => {
+  const message = error?.message?.toLowerCase?.() || ''
+  if (message.includes('otp') || error?.status === 401) {
+    return 'OTP tidak valid atau sudah kadaluarsa'
+  }
+  return error?.message || 'Verifikasi OTP gagal'
+}
+
+const verifyOtp = async () => {
+  const otpCode = otpDigits.value.join('')
+
+  if (!otpContext.value.userId) {
+    otpStatus.value = 'error'
+    otpErrorMessage.value = 'OTP verification failed'
+    return
+  }
+
+  try {
+    otpStatus.value = 'verifying'
+    otpErrorMessage.value = ''
+
+    await authService.verifyOtp(otpContext.value.userId, otpCode, {
+      email: email.value,
+      password: password.value,
+    })
+
+    otpStatus.value = 'success'
+
+    setTimeout(() => {
+      closeOtpModal()
+      router.push('/home-admin')
+    }, 1200)
+  } catch (error) {
+    otpStatus.value = 'error'
+    otpErrorMessage.value = getOtpErrorMessage(error)
+  }
+}
+
+const resendOtp = async () => {
+  if (isOtpResending.value) return
+
+  try {
+    isOtpResending.value = true
+    otpErrorMessage.value = ''
+
+    const loginResult = await authService.loginWithEmail(email.value, password.value)
+
+    if (loginResult?.otpRequired) {
+      openOtpModal(loginResult)
+      return
+    }
+
+    router.push('/home-admin')
+  } catch (error) {
+    otpStatus.value = 'error'
+    otpErrorMessage.value = getOtpErrorMessage(error)
+  } finally {
+    isOtpResending.value = false
+  }
 }
 </script>
 
@@ -226,8 +343,6 @@ const togglePasswordVisibility = () => {
               {{ errorMessage }}
             </div>
 
-            <!-- Remove prototype features -->
-
             <button type="submit" class="btn-primary" :disabled="loading">
               <span v-if="loading" class="loading-spinner"></span>
               <span>{{ loading ? 'Signing in...' : 'Sign In' }}</span>
@@ -258,6 +373,20 @@ const togglePasswordVisibility = () => {
         </div>
       </div>
     </div>
+
+    <!-- OTP Modal Component -->
+    <OtpModal
+      :is-open="isOtpModalOpen"
+      :otp-digits="otpDigits"
+      :otp-status="otpStatus"
+      :otp-error-message="otpErrorMessage"
+      :is-otp-resending="isOtpResending"
+      :masked-email="maskedOtpEmail"
+      @close="closeOtpModal"
+      @verify="verifyOtp"
+      @resend="resendOtp"
+      @update:otp-digits="otpDigits = $event"
+    />
   </div>
 </template>
 

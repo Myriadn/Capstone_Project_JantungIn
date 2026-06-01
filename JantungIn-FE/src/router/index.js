@@ -88,6 +88,13 @@ const routes = [
     component: () => import('@/Page/Admin/AccountAdminPage.vue'),
     meta: { transition: 'fade' },
   },
+  // Catch-all route for 404 - must be at the end
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'notFound',
+    component: () => import('@/Page/NotFoundPage.vue'),
+    meta: { layout: 'notfound', transition: 'fade' },
+  },
 ]
 
 const router = createRouter({
