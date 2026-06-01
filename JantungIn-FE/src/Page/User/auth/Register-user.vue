@@ -77,15 +77,23 @@ const handleRegister = async () => {
       dateOfBirth: dateOfBirth.value || '[not provided]',
     })
 
-    await authService.register({
+    const registerData = await authService.register({
       username: username.value,
       name: username.value,
-      email: email.value || undefined, // Include email if provided
+      email: email.value || undefined,
       password: password.value,
-      dateOfBirth: dateOfBirth.value || undefined, // Include dateOfBirth if provided
+      dateOfBirth: dateOfBirth.value || undefined,
     })
 
-    // Redirect ke login/news setelah sukses
+    console.log('Registration successful:', registerData)
+
+    // Store credentials for auto-fill on login page
+    sessionStorage.setItem('autoFillUsername', username.value)
+    sessionStorage.setItem('autoFillPassword', password.value)
+    sessionStorage.setItem('autoFillEmail', email.value || '')
+
+    // Redirect ke login. Backend does not return token on register.
+    // User must login with OTP after registration.
     router.push('/')
   } catch (err) {
     console.error('Registration failed:', err)

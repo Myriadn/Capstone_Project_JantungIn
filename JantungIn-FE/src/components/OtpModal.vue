@@ -115,6 +115,14 @@ const handleVerify = () => {
 }
 
 const handleResend = () => {
+  // Prevent double-click and abuse by checking resend conditions
+  // Use props.isOtpResending instead of isOtpResending.value since it's a prop
+  if (props.isOtpResending || isOtpLocked.value || resendCountdown.value > 0) {
+    console.warn('Resend OTP blocked - already resending, locked, or countdown active')
+    return
+  }
+
+  console.log('Emitting resend event')
   emit('resend')
   startResendCountdown()
 }
