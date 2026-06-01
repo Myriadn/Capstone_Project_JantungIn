@@ -11,39 +11,48 @@ import (
 )
 
 const (
-	AuthUserIDKey   = "auth_user_id"
-	AuthEmailKey    = "auth_email"
-	AuthRoleIDKey   = "auth_role_id"
-	AuthRoleCodeKey = "auth_role_code"
+	AuthUserIDKey       = "auth_user_id"
+	AuthEmailKey        = "auth_email"
+	AuthRoleIDKey       = "auth_role_id"
+	AuthRoleCodeKey     = "auth_role_code"
+	AuthTokenCookieName = "access_token"
 )
 
 func AuthRequired(cfg *utils.Config) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := c.GetHeader("Authorization")
-		if authHeader == "" {
-			utils.Warn("Missing authorization header",
+		tokenString := ""
+
+		if authHeader != "" {
+			if !strings.HasPrefix(authHeader, "Bearer ") {
+				utils.Warn("Invalid authorization header format",
+					zap.String("path", c.Request.URL.Path),
+				)
+				utils.UnauthorizedResponse(c, "Invalid authentication token format")
+				c.Abort()
+				return
+			}
+
+			tokenString = strings.TrimPrefix(authHeader, "Bearer ")
+			if tokenString == "" {
+				utils.Warn("Empty token after Bearer prefix",
+					zap.String("path", c.Request.URL.Path),
+				)
+				utils.UnauthorizedResponse(c, "Empty authentication token")
+				c.Abort()
+				return
+			}
+		} else {
+			if cookieToken, err := c.Cookie(AuthTokenCookieName); err == nil {
+				tokenString = cookieToken
+			}
+		}
+
+		if tokenString == "" {
+			utils.Warn("Missing authentication token",
 				zap.String("path", c.Request.URL.Path),
 			)
 			utils.UnauthorizedResponse(c, "Missing authentication token")
-			c.Abort()
-			return
-		}
-
-		if !strings.HasPrefix(authHeader, "Bearer ") {
-			utils.Warn("Invalid authorization header format",
-				zap.String("path", c.Request.URL.Path),
-			)
-			utils.UnauthorizedResponse(c, "Invalid authentication token format")
-			c.Abort()
-			return
-		}
-
-		tokenString := strings.TrimPrefix(authHeader, "Bearer ")
-		if tokenString == "" {
-			utils.Warn("Empty token after Bearer prefix",
-				zap.String("path", c.Request.URL.Path),
-			)
-			utils.UnauthorizedResponse(c, "Empty authentication token")
 			c.Abort()
 			return
 		}

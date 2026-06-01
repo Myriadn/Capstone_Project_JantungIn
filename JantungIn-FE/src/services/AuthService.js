@@ -30,7 +30,22 @@ class AuthService {
         const responseData = response.data
         const userData = responseData.data || responseData
 
-        if (!userData || !userData.token) {
+        if (!userData) {
+          console.error('Invalid login response format:', responseData)
+          throw this.formatError(
+            new Error('Invalid response format from server'),
+            'Login failed - invalid server response',
+          )
+        }
+
+        if (userData.otpRequired) {
+          return {
+            ...userData,
+            otpRequired: true,
+          }
+        }
+
+        if (!userData.token) {
           console.error('Invalid login response format:', responseData)
           throw this.formatError(
             new Error('Invalid response format from server: missing token'),
@@ -84,7 +99,22 @@ class AuthService {
         const responseData = response.data
         const userData = responseData.data || responseData
 
-        if (!userData || !userData.token) {
+        if (!userData) {
+          console.error('Invalid email login response format:', responseData)
+          throw this.formatError(
+            new Error('Invalid response format from server'),
+            'Login failed - invalid server response',
+          )
+        }
+
+        if (userData.otpRequired) {
+          return {
+            ...userData,
+            otpRequired: true,
+          }
+        }
+
+        if (!userData.token) {
           console.error('Invalid email login response format:', responseData)
           throw this.formatError(
             new Error('Invalid response format from server: missing token'),
@@ -110,6 +140,49 @@ class AuthService {
     } catch (error) {
       console.error('Email login error:', error)
       throw this.formatError(error, 'Email login failed')
+    }
+  }
+
+  /**
+   * Verify OTP for login
+   * @param {string} userId - User ID
+   * @param {string} code - OTP code
+   * @param {Object} credentials - Optional credentials to store for offline login
+   * @returns {Promise<UserModel>} User model with token
+   */
+  async verifyOtp(userId, code, credentials = {}) {
+    try {
+      const response = await apiService.post(
+        '/api/v1/auth/verify-otp',
+        { userId, code },
+        {
+          showNotifications: true,
+          operationName: 'Verifikasi OTP',
+        },
+      )
+
+      const responseData = response.data
+      const userData = responseData.data || responseData
+
+      if (!userData || !userData.token) {
+        console.error('Invalid OTP verification response format:', responseData)
+        throw this.formatError(
+          new Error('Invalid response format from server: missing token'),
+          'OTP verification failed - invalid server response',
+        )
+      }
+
+      apiService.setToken(userData.token)
+
+      this.saveUserToStorage({
+        ...userData,
+        ...credentials,
+      })
+
+      return new UserModel(userData)
+    } catch (error) {
+      console.error('OTP verification error:', error)
+      throw this.formatError(error, 'OTP verification failed')
     }
   }
 
@@ -151,10 +224,7 @@ class AuthService {
       }
 
       if (userData.username.trim().length < 3) {
-        throw this.formatError(
-          new Error('username minimal 3 karakter'),
-          'Invalid username format',
-        )
+        throw this.formatError(new Error('username minimal 3 karakter'), 'Invalid username format')
       }
 
       // Validate email if provided

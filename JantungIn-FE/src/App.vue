@@ -36,6 +36,11 @@ const isAdminPage = computed(() => {
   return adminRouteNames.includes(route.name)
 })
 
+// Check if the current route is a 404 page
+const isNotFoundPage = computed(() => {
+  return route.name === 'notFound'
+})
+
 // Network status handlers
 const handleOnline = () => {
   isOnline.value = true
@@ -94,7 +99,7 @@ onUnmounted(() => {
   <!-- Application Shell Architecture -->
   <div class="flex flex-col min-h-screen">
     <!-- Static Shell Content (Header) -->
-    <header v-if="route.meta.layout !== 'print'">
+    <header v-if="route.meta.layout !== 'print' && !isNotFoundPage">
       <!-- Show admin navbar for admin pages -->
       <NavbarAdmin v-if="isAdminPage && route.name !== 'admin'" />
       <!-- Show regular navbar for user pages -->
@@ -158,16 +163,16 @@ onUnmounted(() => {
     </main>
 
     <!-- Static Shell Content (Footer) -->
-    <footer v-if="route.meta.layout !== 'print'">
+    <footer v-if="route.meta.layout !== 'print' && !isNotFoundPage">
       <!-- Footer content if needed -->
     </footer>
 
     <!-- PWA Components -->
-    <RefreshApp v-if="route.meta.layout !== 'print'" />
-    <PWAStatus v-if="route.meta.layout !== 'print'" />
+    <RefreshApp v-if="route.meta.layout !== 'print' && !isNotFoundPage" />
+    <PWAStatus v-if="route.meta.layout !== 'print' && !isNotFoundPage" />
 
     <!-- Ad Popup Component -->
-    <AdPopupComponent v-if="route.meta.layout !== 'print'" />
+    <AdPopupComponent v-if="route.meta.layout !== 'print' && !isNotFoundPage" />
   </div>
 </template>
 

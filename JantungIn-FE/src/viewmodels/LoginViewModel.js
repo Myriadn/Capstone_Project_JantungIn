@@ -24,12 +24,81 @@ export function useLoginViewModel() {
   const errorMessage = ref('')
   const isOfflineMode = ref(!navigator.onLine)
 
+  // OTP state
+  const isOtpModalOpen = ref(false)
+  const otpDigits = ref(Array.from({ length: 6 }, () => ''))
+  const otpStatus = ref('idle')
+  const otpErrorMessage = ref('')
+  const isOtpResending = ref(false)
+  const otpContext = ref({
+    userId: '',
+    email: '',
+    name: '',
+    role: '',
+    otpExpiresIn: 0,
+  })
+
   /**
    * Computed property to check if form is valid
    */
   const isFormValid = computed(() => {
     return username.value.trim() !== '' && password.value.trim() !== ''
   })
+
+  const maskEmail = (email) => {
+    if (!email) return ''
+    const [name, domain] = email.split('@')
+    if (!domain) return email
+
+    const visibleCount = Math.min(3, name.length)
+    const visible = name.slice(0, visibleCount)
+    return `${visible}***@${domain}`
+  }
+
+  const otpCode = computed(() => otpDigits.value.join(''))
+  const isOtpComplete = computed(() => otpDigits.value.every((digit) => digit !== ''))
+  const maskedOtpEmail = computed(() => maskEmail(otpContext.value.email))
+
+  const resetOtpState = () => {
+    otpDigits.value = Array.from({ length: 6 }, () => '')
+    otpStatus.value = 'idle'
+    otpErrorMessage.value = ''
+  }
+
+  const openOtpModal = (otpData) => {
+    otpContext.value = {
+      userId: otpData.id || '',
+      email: otpData.email || '',
+      name: otpData.name || '',
+      role: otpData.role || 'user',
+      otpExpiresIn: otpData.otpExpiresIn || 0,
+    }
+
+    resetOtpState()
+    isOtpModalOpen.value = true
+  }
+
+  const closeOtpModal = () => {
+    isOtpModalOpen.value = false
+    resetOtpState()
+    otpContext.value = {
+      userId: '',
+      email: '',
+      name: '',
+      role: '',
+      otpExpiresIn: 0,
+    }
+  }
+
+  const getOtpErrorMessage = (error) => {
+    const message = error?.message?.toLowerCase?.() || ''
+
+    if (message.includes('otp') || error?.status === 401) {
+      return 'OTP is Invalid or Expired'
+    }
+
+    return error?.message || 'OTP verification failed'
+  }
 
   /**
    * Handle login form submission
@@ -52,6 +121,11 @@ export function useLoginViewModel() {
 
       console.log('Login successful:', user)
 
+      if (user?.otpRequired) {
+        openOtpModal(user)
+        return
+      }
+
       // Redirect to news page after successful login
       router.push('/home')
     } catch (error) {
@@ -63,6 +137,63 @@ export function useLoginViewModel() {
       throw error
     } finally {
       isLoading.value = false
+    }
+  }
+
+  const verifyOtp = async () => {
+    if (!isOtpComplete.value) {
+      otpStatus.value = 'error'
+      otpErrorMessage.value = 'OTP harus 6 digit'
+      return
+    }
+
+    if (!otpContext.value.userId) {
+      otpStatus.value = 'error'
+      otpErrorMessage.value = 'OTP verification failed'
+      return
+    }
+
+    try {
+      otpStatus.value = 'verifying'
+      otpErrorMessage.value = ''
+
+      await authService.verifyOtp(otpContext.value.userId, otpCode.value, {
+        username: username.value,
+        password: password.value,
+      })
+
+      otpStatus.value = 'success'
+
+      setTimeout(() => {
+        closeOtpModal()
+        router.push('/home')
+      }, 1200)
+    } catch (error) {
+      otpStatus.value = 'error'
+      otpErrorMessage.value = getOtpErrorMessage(error)
+    }
+  }
+
+  const resendOtp = async () => {
+    if (isOtpResending.value) return
+
+    try {
+      isOtpResending.value = true
+      otpErrorMessage.value = ''
+
+      const user = await authService.login(username.value, password.value)
+
+      if (user?.otpRequired) {
+        openOtpModal(user)
+        return
+      }
+
+      router.push('/home')
+    } catch (error) {
+      otpStatus.value = 'error'
+      otpErrorMessage.value = getOtpErrorMessage(error)
+    } finally {
+      isOtpResending.value = false
     }
   }
 
@@ -107,9 +238,19 @@ export function useLoginViewModel() {
     errorMessage,
     isOfflineMode,
     isFormValid,
+    isOtpModalOpen,
+    otpDigits,
+    otpStatus,
+    otpErrorMessage,
+    isOtpResending,
+    maskedOtpEmail,
+    isOtpComplete,
 
     // Methods
     handleLogin,
+    verifyOtp,
+    resendOtp,
+    closeOtpModal,
     goToRegister,
     resetForm,
     togglePasswordVisibility,

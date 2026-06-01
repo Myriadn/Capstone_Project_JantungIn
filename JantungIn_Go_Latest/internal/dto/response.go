@@ -30,7 +30,6 @@ type AuthRegisterData struct {
 	Username *string `json:"username,omitempty"`
 	Email    *string `json:"email"`
 	Role     string  `json:"role"`
-	Token    string  `json:"token"`
 }
 
 type AuthLoginResponse struct {
@@ -46,6 +45,16 @@ type AuthLoginData struct {
 	Email    *string `json:"email"`
 	Role     string  `json:"role"`
 	Token    string  `json:"token"`
+}
+
+type AuthLoginOTPData struct {
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Username     *string `json:"username,omitempty"`
+	Email        *string `json:"email"`
+	Role         string  `json:"role"`
+	OTPRequired  bool    `json:"otpRequired"`
+	OTPExpiresIn int     `json:"otpExpiresIn"`
 }
 
 type ProfileResponse struct {

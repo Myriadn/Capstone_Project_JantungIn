@@ -33,7 +33,7 @@ func Wiring(cfg *utils.Config, db *gorm.DB) *gin.Engine {
 	usecases := usecase.NewUseCase(repo.UserRepo, repo.DiagnosisRepo, repo.StatsRepo, repo.UserDeviceRepo, cfg, db)
 
 	// Initialize adaptors
-	adaptors := adaptor.NewAdaptor(usecases)
+	adaptors := adaptor.NewAdaptor(usecases, cfg)
 
 	// RequestTracker middleware — catat setiap request ke DB
 	// Dipasang setelah router global middleware agar status code sudah tersedia
@@ -58,6 +58,7 @@ func registerAuthRoutes(api *gin.RouterGroup, adaptors *adaptor.Adaptor, cfg *ut
 		auth.POST("/register", adaptors.AuthAdaptor.Register)
 		auth.POST("/login", adaptors.AuthAdaptor.Login)
 		auth.POST("/login-email", adaptors.AuthAdaptor.LoginWithEmail)
+		auth.POST("/verify-otp", adaptors.AuthAdaptor.VerifyOTP)
 	}
 
 	// Auth routes (protected)
@@ -66,6 +67,7 @@ func registerAuthRoutes(api *gin.RouterGroup, adaptors *adaptor.Adaptor, cfg *ut
 	{
 		authProtected.GET("/profile", adaptors.AuthAdaptor.GetProfile)
 		authProtected.PUT("/profile", adaptors.AuthAdaptor.UpdateProfile)
+		authProtected.POST("/logout", adaptors.AuthAdaptor.Logout)
 	}
 }
 

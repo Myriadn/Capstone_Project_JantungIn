@@ -2,6 +2,7 @@ package adaptor
 
 import (
 	"jantungin-api-server/internal/usecase"
+	"jantungin-api-server/pkg/utils"
 )
 
 type Adaptor struct {
@@ -11,9 +12,9 @@ type Adaptor struct {
 	PatientAdaptor   *PatientAdaptor
 }
 
-func NewAdaptor(usecases *usecase.UseCase) *Adaptor {
+func NewAdaptor(usecases *usecase.UseCase, cfg *utils.Config) *Adaptor {
 	return &Adaptor{
-		AuthAdaptor:      NewAuthAdaptor(usecases.AuthUseCase),
+		AuthAdaptor:      NewAuthAdaptor(usecases.AuthUseCase, cfg),
 		DiagnosisAdaptor: NewDiagnosisAdaptor(usecases.DiagnosisUseCase),
 		StatsAdaptor:     NewStatsAdaptor(usecases.StatsUseCase),
 		PatientAdaptor:   NewPatientAdaptor(usecases.PatientUseCase),

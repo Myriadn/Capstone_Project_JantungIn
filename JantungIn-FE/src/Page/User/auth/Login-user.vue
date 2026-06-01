@@ -3,6 +3,7 @@
 import { useLoginViewModel } from '@/viewmodels/LoginViewModel'
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import OtpModal from '@/components/OtpModal.vue'
 
 // Get vue-router instance
 const router = useRouter()
@@ -16,6 +17,15 @@ const {
   isOfflineMode,
   isLoading,
   handleLogin,
+  isOtpModalOpen,
+  otpDigits,
+  otpStatus,
+  otpErrorMessage,
+  isOtpResending,
+  maskedOtpEmail,
+  verifyOtp,
+  resendOtp,
+  closeOtpModal,
 
   goToRegister: navigateToRegister,
   togglePasswordVisibility,
@@ -337,6 +347,20 @@ onUnmounted(() => {
         </div>
       </div>
     </div>
+
+    <!-- OTP Modal -->
+    <OtpModal
+      :is-open="isOtpModalOpen"
+      :otp-digits="otpDigits"
+      :otp-status="otpStatus"
+      :otp-error-message="otpErrorMessage"
+      :is-otp-resending="isOtpResending"
+      :masked-email="maskedOtpEmail"
+      @close="closeOtpModal"
+      @verify="verifyOtp"
+      @resend="resendOtp"
+      @update:otp-digits="otpDigits = $event"
+    />
   </div>
 </template>
 
@@ -786,6 +810,8 @@ onUnmounted(() => {
     transform: rotate(360deg);
   }
 }
+
+/* OTP Modal */
 
 /* Install App Button Styles */
 .install-app-btn {

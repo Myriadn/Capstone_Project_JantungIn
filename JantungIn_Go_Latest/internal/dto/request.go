@@ -18,6 +18,11 @@ type AuthLoginEmailRequest struct {
 	Password string `json:"password" binding:"required"`
 }
 
+type AuthVerifyOTPRequest struct {
+	UserID string `json:"userId" binding:"required"`
+	Code   string `json:"code" binding:"required"`
+}
+
 type UpdateProfileRequest struct {
 	Name        string `json:"name"`
 	DateOfBirth string `json:"dateOfBirth"`
