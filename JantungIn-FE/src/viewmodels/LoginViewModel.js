@@ -30,6 +30,8 @@ export function useLoginViewModel() {
   const otpStatus = ref('idle')
   const otpErrorMessage = ref('')
   const isOtpResending = ref(false)
+  const lastOtpResendTime = ref(0)
+  const otpResendAttempts = ref(0)
   const otpContext = ref({
     userId: '',
     email: '',
@@ -175,13 +177,42 @@ export function useLoginViewModel() {
   }
 
   const resendOtp = async () => {
-    if (isOtpResending.value) return
+    // Rate limiting checks to prevent abuse
+    if (isOtpResending.value) {
+      console.warn('OTP resend already in progress')
+      return
+    }
+
+    const now = Date.now()
+    const timeSinceLastResend = now - lastOtpResendTime.value
+
+    // Check cooldown (30 seconds minimum between resends - matches countdown timer)
+    if (timeSinceLastResend < 30000) {
+      const waitSeconds = Math.ceil((30000 - timeSinceLastResend) / 1000)
+      otpStatus.value = 'error'
+      otpErrorMessage.value = `Please wait ${waitSeconds}s before resending OTP`
+      console.warn('OTP resend cooldown active, wait time:', waitSeconds, 's')
+      return
+    }
+
+    // Check max attempts (3 attempts max)
+    if (otpResendAttempts.value >= 3) {
+      otpStatus.value = 'error'
+      otpErrorMessage.value = 'Maximum resend attempts reached. Please try again later.'
+      console.warn('Max OTP resend attempts exceeded')
+      return
+    }
 
     try {
       isOtpResending.value = true
       otpErrorMessage.value = ''
 
       const user = await authService.login(username.value, password.value)
+
+      // Successfully resent OTP - update tracking
+      otpResendAttempts.value += 1
+      lastOtpResendTime.value = now
+      console.info('OTP resend successful, attempt:', otpResendAttempts.value)
 
       if (user?.otpRequired) {
         openOtpModal(user)
@@ -192,6 +223,7 @@ export function useLoginViewModel() {
     } catch (error) {
       otpStatus.value = 'error'
       otpErrorMessage.value = getOtpErrorMessage(error)
+      console.error('OTP resend error:', error)
     } finally {
       isOtpResending.value = false
     }

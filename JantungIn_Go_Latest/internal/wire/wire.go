@@ -56,8 +56,8 @@ func registerAuthRoutes(api *gin.RouterGroup, adaptors *adaptor.Adaptor, cfg *ut
 	auth := api.Group("/auth")
 	{
 		auth.POST("/register", adaptors.AuthAdaptor.Register)
-		auth.POST("/login", adaptors.AuthAdaptor.Login)
-		auth.POST("/login-email", adaptors.AuthAdaptor.LoginWithEmail)
+		auth.POST("/login", middleware.LoginRateLimit(), adaptors.AuthAdaptor.Login)
+		auth.POST("/login-email", middleware.LoginRateLimit(), adaptors.AuthAdaptor.LoginWithEmail)
 		auth.POST("/verify-otp", adaptors.AuthAdaptor.VerifyOTP)
 	}
 

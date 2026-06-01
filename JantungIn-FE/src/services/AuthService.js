@@ -239,12 +239,12 @@ class AuthService {
       })
       console.log('Registration response:', response)
 
-      // API returns: { statusCode: 201, message: "User registered successfully", data: { id, name, email, role, token } }
-      // Check if the token is in response.data.data.token or response.data.token
+      // API returns: { statusCode: 201, message: "User registered successfully", data: { id, name, username, email, role } }
+      // Note: Register endpoint does NOT return token. User needs to login with OTP after registration.
       const responseData = response.data
       const userData2 = responseData.data || responseData
 
-      if (!userData2 || !userData2.token) {
+      if (!userData2 || !userData2.id) {
         console.error('Invalid registration response format:', responseData)
         throw this.formatError(
           new Error('Invalid response format from server during registration'),
@@ -252,17 +252,16 @@ class AuthService {
         )
       }
 
-      // Set token for future API calls
-      apiService.setToken(userData2.token)
+      // Save credentials for immediate login flow
+      const credentials = {
+        username: userData.username,
+        password: userData.password,
+        email: userData.email,
+      }
+      sessionStorage.setItem('pendingLoginCredentials', JSON.stringify(credentials))
 
-      // Save user data for offline usage
-      this.saveUserToStorage({
-        ...userData2,
-        username: userData2.username || userData.username,
-        password: userData.password, // Only for offline login
-      })
-
-      return new UserModel(userData2)
+      // Return user data for redirect to login
+      return userData2
     } catch (error) {
       console.error('Registration error:', error)
       throw this.formatError(error, 'Registration failed')
