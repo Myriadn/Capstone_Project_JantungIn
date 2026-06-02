@@ -31,7 +31,7 @@
       "loginFailed": "Login failed. Please try again."
     },
     "validation": {
-      "usernameFormat": "Username must be at least 3 characters.",
+      "usernameFormat": "Username must be 3–16 characters, start with a letter or number, and may contain only letters, numbers, dots, and underscores (no consecutive dots/underscores).",
       "emailFormat": "Invalid email format.",
       "passwordLength": "Password must be at least 8 characters long.",
       "passwordsDoNotMatch": "Passwords do not match.",

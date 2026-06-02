@@ -37,6 +37,8 @@ func (h *AuthAdaptor) Register(c *gin.Context) {
 		switch err.Error() {
 		case "username wajib diisi",
 			"username minimal 3 karakter",
+			"username maksimal 16 karakter",
+			"format username tidak valid",
 			"password minimal 6 karakter",
 			"format tanggal lahir tidak valid, gunakan YYYY-MM-DD":
 			utils.BadRequestResponse(c, err.Error(), nil)

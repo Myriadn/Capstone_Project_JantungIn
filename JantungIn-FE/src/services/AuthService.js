@@ -223,8 +223,26 @@ class AuthService {
         )
       }
 
-      if (userData.username.trim().length < 3) {
+      const trimmedUsername = userData.username.trim()
+      const usernameRegex = /^[A-Za-z0-9]+([._][A-Za-z0-9]+)*$/
+
+      if (trimmedUsername.length < 3) {
         throw this.formatError(new Error('username minimal 3 karakter'), 'Invalid username format')
+      }
+
+      if (trimmedUsername.length > 16) {
+        throw this.formatError(
+          new Error('username maksimal 16 karakter'),
+          'Invalid username format',
+        )
+      }
+
+      if (trimmedUsername !== userData.username) {
+        throw this.formatError(new Error('format username tidak valid'), 'Invalid username format')
+      }
+
+      if (!usernameRegex.test(trimmedUsername)) {
+        throw this.formatError(new Error('format username tidak valid'), 'Invalid username format')
       }
 
       // Validate email if provided

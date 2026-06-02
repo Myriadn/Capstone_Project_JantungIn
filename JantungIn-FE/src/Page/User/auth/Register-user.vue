@@ -48,7 +48,20 @@ const validateForm = () => {
   }
 
   // Validate username
-  if (username.value.length < 3) {
+  const trimmedUsername = username.value.trim()
+  const usernameRegex = /^[A-Za-z0-9]+([._][A-Za-z0-9]+)*$/
+
+  if (trimmedUsername.length < 3 || trimmedUsername.length > 16) {
+    errorMessage.value = t('errors.validation.usernameFormat')
+    return false
+  }
+
+  if (trimmedUsername !== username.value) {
+    errorMessage.value = t('errors.validation.usernameFormat')
+    return false
+  }
+
+  if (!usernameRegex.test(trimmedUsername)) {
     errorMessage.value = t('errors.validation.usernameFormat')
     return false
   }

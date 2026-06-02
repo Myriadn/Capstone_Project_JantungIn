@@ -3,6 +3,7 @@ package usecase
 import (
 	"context"
 	"errors"
+	"regexp"
 	"strings"
 	"time"
 
@@ -48,14 +49,28 @@ func NewAuthUsecase(userRepo repository.UserRepository, userDeviceRepo repositor
 
 const otpTTL = 30 * time.Second
 
+var usernamePattern = regexp.MustCompile(`^[A-Za-z0-9]+([._][A-Za-z0-9]+)*$`)
+
 func (u *authUsecase) Register(ctx context.Context, req dto.AuthRegisterRequest) (*dto.AuthRegisterData, error) {
-	username := strings.ToLower(strings.TrimSpace(req.Username))
-	if username == "" {
+	rawUsername := req.Username
+	trimmedUsername := strings.TrimSpace(rawUsername)
+	if trimmedUsername == "" {
 		return nil, errors.New("username wajib diisi")
 	}
-	if len(username) < 3 {
+	if trimmedUsername != rawUsername {
+		return nil, errors.New("format username tidak valid")
+	}
+	if len(trimmedUsername) < 3 {
 		return nil, errors.New("username minimal 3 karakter")
 	}
+	if len(trimmedUsername) > 16 {
+		return nil, errors.New("username maksimal 16 karakter")
+	}
+	if !usernamePattern.MatchString(trimmedUsername) {
+		return nil, errors.New("format username tidak valid")
+	}
+
+	username := strings.ToLower(trimmedUsername)
 
 	if len(req.Password) < 6 {
 		return nil, errors.New("password minimal 6 karakter")

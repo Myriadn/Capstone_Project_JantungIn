@@ -31,7 +31,7 @@
       "loginFailed": "Login gagal. Silakan coba lagi."
     },
     "validation": {
-      "usernameFormat": "Username minimal 3 karakter.",
+      "usernameFormat": "Username 3–16 karakter, harus diawali huruf/angka, dan hanya boleh huruf, angka, titik, atau underscore (tidak boleh titik/underscore beruntun).",
       "emailFormat": "Format email tidak valid.",
       "passwordLength": "Password harus terdiri dari minimal 8 karakter.",
       "passwordsDoNotMatch": "Password tidak cocok.",

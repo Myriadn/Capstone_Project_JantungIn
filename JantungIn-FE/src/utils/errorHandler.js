@@ -77,10 +77,10 @@ export function useErrorHandler() {
     else if (error?.message) {
       // Handle specific error messages
       if (error.message.toLowerCase().includes('username')) {
-        if (error.message.includes('minimal 3')) {
-          messageKey = 'errors.validation.usernameFormat'
-        } else if (error.message.includes('terdaftar')) {
+        if (error.message.includes('terdaftar')) {
           messageKey = 'errors.auth.usernameAlreadyRegistered'
+        } else {
+          messageKey = 'errors.validation.usernameFormat'
         }
       } else if (error.message.includes('email')) {
         if (error.message.includes('format')) {
