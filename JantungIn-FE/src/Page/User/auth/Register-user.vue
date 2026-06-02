@@ -268,7 +268,7 @@ const handleRegister = async () => {
 
             <!-- Optional Email Field -->
             <div class="form-group">
-              <label for="email">Email (Optional)</label>
+              <label for="email">Email</label>
               <div class="input-container">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -289,14 +289,14 @@ const handleRegister = async () => {
                   v-model="email"
                   type="email"
                   class="form-control"
-                  placeholder="Enter your email (optional)"
+                  placeholder="Enter your email"
                 />
               </div>
             </div>
 
             <!-- Optional Date of Birth Field -->
             <div class="form-group">
-              <label for="dateOfBirth">Date of Birth (Optional)</label>
+              <label for="dateOfBirth">Date of Birth</label>
               <div class="input-container">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
