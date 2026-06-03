@@ -110,7 +110,9 @@ class PWAUpdater {
     // Deteksi saat service worker diperbarui
     navigator.serviceWorker.addEventListener('controllerchange', () => {
       if (this.updateAvailable) {
-        console.log('Reload halaman untuk menggunakan service worker baru')
+        console.log('Service worker baru aktif, reload halaman...')
+        this.updateAvailable = false // biar gak loop
+        window.location.reload()
       }
     })
   }

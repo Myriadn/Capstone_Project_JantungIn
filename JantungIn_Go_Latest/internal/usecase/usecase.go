@@ -5,7 +5,7 @@ import (
 	"jantungin-api-server/internal/services"
 	"jantungin-api-server/pkg/utils"
 
-	otp "github.com/Myriadn/otp-lcm"
+	"jantungin-api-server/pkg/otp"
 
 	"gorm.io/gorm"
 )

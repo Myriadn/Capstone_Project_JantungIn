@@ -64,6 +64,25 @@ func (m *MemoryStore) Validate(username, code string) bool {
 	return false
 }
 
+// Has mengecek apakah masih ada OTP valid (belum expired) untuk username tertentu
+// Method ini tidak memodifikasi state (read-only), jadi aman dipanggil kapan saja.
+func (m *MemoryStore) Has(username string) bool {
+	m.mu.RLock()
+	defer m.mu.RUnlock()
+
+	item, exists := m.store[username]
+	if !exists {
+		return false
+	}
+
+	// Cek apakah sudah expired
+	if time.Now().After(item.ExpiresAt) {
+		return false
+	}
+
+	return true
+}
+
 // cleanupRoutine berjalan di background (goroutine)
 // untuk menghapus OTP yang sudah expire agar RAM tidak penuh
 func (m *MemoryStore) cleanupRoutine() {

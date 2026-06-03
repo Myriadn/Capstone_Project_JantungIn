@@ -29,6 +29,7 @@ export default defineConfig(({ command }) => ({
         enabled: true, // Enable PWA in development for testing
       },
       workbox: {
+        clientsClaim: true,
         globPatterns: ['**/*.{js,css,html,ico,png,svg,jpg,jpeg}'],
         runtimeCaching: [
           {
@@ -51,6 +52,10 @@ export default defineConfig(({ command }) => ({
             options: {
               cacheName: 'api-cache',
               networkTimeoutSeconds: 5,
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60, // 1 jam
+              },
               cacheableResponse: {
                 statuses: [0, 200],
               },

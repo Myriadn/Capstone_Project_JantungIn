@@ -2,6 +2,7 @@ package middleware
 
 import (
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -102,14 +103,21 @@ func init() {
 }
 
 // LoginRateLimit middleware - 5 attempts per 15 minutes per IP
-func LoginRateLimit() gin.HandlerFunc {
+// In development environment, the rate limiter is disabled.
+func LoginRateLimit(env string) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Skip rate limiting in development
+		if env == "development" {
+			c.Next()
+			return
+		}
+
 		ip := c.ClientIP()
 
 		allowed, retryAfter := loginRateLimitStore.IsAllowed(ip, 5, 900) // 5 attempts per 15 minutes
 
 		if !allowed {
-			c.Header("Retry-After", string(rune(retryAfter)))
+			c.Header("Retry-After", strconv.Itoa(retryAfter))
 			utils.ErrorResponse(c, http.StatusTooManyRequests, "Too many login attempts. Please try again later.", map[string]interface{}{
 				"retry_after_seconds": retryAfter,
 			})
@@ -142,7 +150,7 @@ func OTPResendRateLimit() gin.HandlerFunc {
 		allowed, retryAfter := otpResendRateLimitStore.IsAllowed(userIDStr, 3, 3600) // 3 attempts per 60 minutes
 
 		if !allowed {
-			c.Header("Retry-After", string(rune(retryAfter)))
+			c.Header("Retry-After", strconv.Itoa(retryAfter))
 			utils.ErrorResponse(c, http.StatusTooManyRequests, "Too many OTP resend attempts. Please try again later.", map[string]interface{}{
 				"retry_after_seconds": retryAfter,
 			})

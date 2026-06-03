@@ -13,7 +13,7 @@ import (
 	"jantungin-api-server/internal/services"
 	"jantungin-api-server/pkg/utils"
 
-	otp "github.com/Myriadn/otp-lcm"
+	"jantungin-api-server/pkg/otp"
 
 	"github.com/google/uuid"
 	"go.uber.org/zap"
@@ -181,6 +181,22 @@ func (u *authUsecase) Login(ctx context.Context, req dto.AuthLoginRequest) (*dto
 		return nil, errors.New("username tidak ditemukan")
 	}
 
+	// Jika masih ada OTP valid, kirim ulang response tanpa generate & kirim email baru
+	if u.otpStore.Has(foundUser.ID.String()) {
+		utils.Info("Existing valid OTP found, skipping OTP generation",
+			zap.String("user_id", foundUser.ID.String()),
+		)
+		return &dto.AuthLoginOTPData{
+			ID:           foundUser.ID.String(),
+			Name:         foundUser.Name,
+			Username:     foundUser.Username,
+			Email:        foundUser.Email,
+			Role:         foundUser.Role,
+			OTPRequired:  true,
+			OTPExpiresIn: int(otpTTL.Seconds()),
+		}, nil
+	}
+
 	normalizedUsername := strings.ToLower(strings.TrimSpace(*foundUser.Username))
 	code := otp.GenerateOTP(normalizedUsername, time.Now())
 
@@ -239,6 +255,22 @@ func (u *authUsecase) LoginWithEmail(ctx context.Context, req dto.AuthLoginEmail
 	}
 	if user.Username == nil || strings.TrimSpace(*user.Username) == "" {
 		return nil, errors.New("username tidak ditemukan")
+	}
+
+	// Jika masih ada OTP valid, kirim ulang response tanpa generate & kirim email baru
+	if u.otpStore.Has(user.ID.String()) {
+		utils.Info("Existing valid OTP found, skipping OTP generation",
+			zap.String("user_id", user.ID.String()),
+		)
+		return &dto.AuthLoginOTPData{
+			ID:           user.ID.String(),
+			Name:         user.Name,
+			Username:     user.Username,
+			Email:        user.Email,
+			Role:         user.Role,
+			OTPRequired:  true,
+			OTPExpiresIn: int(otpTTL.Seconds()),
+		}, nil
 	}
 
 	normalizedUsername := strings.ToLower(strings.TrimSpace(*user.Username))
